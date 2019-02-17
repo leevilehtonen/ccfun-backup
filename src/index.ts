@@ -17,21 +17,20 @@ const checkModified = async (location: PathLike, interval: number): Promise<Dire
 }
 
 // Promisified upload of file stream to s3
-const backupFile = async (location: string, file: string) =>
-  new AWS.S3({})
-    .upload({ Bucket: "ccfun-backupstorage", Key: file, Body: createReadStream(join(location, file)) })
-    .promise()
+const backupFile = async (location: string, file: string, bucket: string) =>
+  new AWS.S3({}).upload({ Bucket: bucket, Key: file, Body: createReadStream(join(location, file)) }).promise()
 
 // Process
-const run = async (location: string, interval: number) => {
+const run = async (location: string, interval: number, bucket: string) => {
   const files = await checkModified(location, interval)
-  const uploads = files.map(file => backupFile(location, file.name))
+  const uploads = files.map(file => backupFile(location, file.name, bucket))
   return Promise.all(uploads)
 }
 
 // Parse location path and the interval for checking directory changes
 const location = process.argv[2]
 const interval = Number(process.argv[3])
+const bucket = process.argv[4]
 
 if (location === undefined || location === null) {
   throw new Error("Location is not valid")
@@ -39,9 +38,12 @@ if (location === undefined || location === null) {
 if (isNaN(interval) || interval < 3) {
   throw new Error("Interval is not valid")
 }
+if (bucket === undefined || bucket === null) {
+  throw new Error("Bucket is not valid")
+}
 
 setInterval(() => {
-  run(location, interval)
+  run(location, interval, bucket)
     .then(() => console.log(`Backup check ran at ${moment().format()}`))
     .catch(() => console.log("Backup process failed"))
 }, interval * 1000)
