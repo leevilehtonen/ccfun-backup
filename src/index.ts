@@ -6,6 +6,7 @@ import AWS from "aws-sdk"
 
 AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: "school" })
 
+// Get files which have been modified in the loacation during the last interval
 const checkModified = async (location: PathLike, interval: number): Promise<Dirent[]> => {
   let files = await promisify(readdir)(location, { withFileTypes: true })
   files = files.filter(file => !file.isDirectory())
@@ -15,17 +16,20 @@ const checkModified = async (location: PathLike, interval: number): Promise<Dire
   return files
 }
 
+// Promisified upload of file stream to s3
 const backupFile = async (location: string, file: string) =>
   new AWS.S3({})
     .upload({ Bucket: "ccfun-backupstorage", Key: file, Body: createReadStream(join(location, file)) })
     .promise()
 
+// Process
 const run = async (location: string, interval: number) => {
   const files = await checkModified(location, interval)
   const uploads = files.map(file => backupFile(location, file.name))
   return Promise.all(uploads)
 }
 
+// Parse location path and the interval for checking directory changes
 const location = process.argv[2]
 const interval = Number(process.argv[3])
 
