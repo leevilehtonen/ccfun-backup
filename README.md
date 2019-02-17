@@ -23,4 +23,6 @@ In addition to these the application expects that the credentials to user who ha
 Logic of the application is very simple. After the specified interval has gone, application will check all the files in the specified directory, and for all the files which have been modified during the last interval, the application will upload a new version to the specified S3 bucket. As the bucket is configured to enable versioning, all the versions of the files will be availble in the bucket. This is being repeated after every interval.
 
 ## AWS S3 Configuration
-AWS S3 bucket has been created with default recommended settings. In AWS S3 console bucket properties the Versioning has been enabled which allows all the versions to be saved in same bucket.
+AWS S3 bucket has been created with default recommended settings. In addition to recommended settings:
+- Versioning has been enabled in the Properties tab in AWS S3 console. This allows all the versions to be saved in same bucket.
+- Lifecycle rule has been added to previous versions in the Management tab in AWS S3 console. This will move all the previous versions of the objects to the Glacier storage.
